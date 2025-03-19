@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest # Use GitHub-hosted Linux VM
+    runs-on: ubuntu-latest # Use GitHub's Linux VM
 
     steps:
       - name: Checkout Source
@@ -39,7 +39,7 @@ jobs:
           mka systemimage
 
       - name: Upload GSI Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4 # Updated to v4
         with:
           name: crDroid-GSI
           path: ~/crdroid_gsi/out/target/product/treble_arm64_bvS/system.img
