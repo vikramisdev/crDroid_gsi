@@ -1,0 +1,45 @@
+name: Build crDroid GSI
+
+on: 
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # Use GitHub-hosted Linux VM
+
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v3
+      
+      - name: Set Up Build Environment
+        run: |
+          sudo apt update && sudo apt install -y openjdk-11-jdk git ccache zip curl \
+            bison flex libxml2-utils python3 libncurses5-dev g++-multilib gcc-multilib \
+            libssl-dev bc repo
+
+      - name: Initialize Repo and Sync Source
+        run: |
+          mkdir -p ~/crdroid_gsi
+          cd ~/crdroid_gsi
+          repo init -u https://github.com/crdroidandroid/android.git -b 14.0
+          repo sync -c --force-sync --no-clone-bundle --no-tags -j$(nproc --all)
+
+      - name: Apply PHH Treble Patches
+        run: |
+          cd ~/crdroid_gsi
+          git clone https://github.com/phhusson/treble_patches.git
+          cd treble_patches
+          bash apply-patches.sh ~/crdroid_gsi
+
+      - name: Start crDroid GSI Build
+        run: |
+          cd ~/crdroid_gsi
+          . build/envsetup.sh
+          lunch treble_arm64_bvS-userdebug
+          mka systemimage
+
+      - name: Upload GSI Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: crDroid-GSI
+          path: ~/crdroid_gsi/out/target/product/treble_arm64_bvS/system.img
